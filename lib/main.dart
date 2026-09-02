@@ -3,18 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:provider/provider.dart';
+
 import 'core/services/agora_service.dart';
 import 'features/call/presentation/pages/call_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  
+
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AgoraService()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AgoraService())],
       child: const MyApp(),
     ),
   );

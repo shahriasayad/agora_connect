@@ -30,10 +30,12 @@ class AgoraService extends ChangeNotifier {
 
     // Create RtcEngine instance
     _engine = createAgoraRtcEngine();
-    await _engine!.initialize(RtcEngineContext(
-      appId: AgoraConfig.appId,
-      channelProfile: ChannelProfileType.channelProfileCommunication,
-    ));
+    await _engine!.initialize(
+      RtcEngineContext(
+        appId: AgoraConfig.appId,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+      ),
+    );
 
     // Register event handlers
     _engine!.registerEventHandler(
@@ -47,11 +49,15 @@ class AgoraService extends ChangeNotifier {
           _remoteUids.add(remoteUid);
           notifyListeners();
         },
-        onUserOffline: (RtcConnection connection, int remoteUid,
-            UserOfflineReasonType reason) {
-          _remoteUids.remove(remoteUid);
-          notifyListeners();
-        },
+        onUserOffline:
+            (
+              RtcConnection connection,
+              int remoteUid,
+              UserOfflineReasonType reason,
+            ) {
+              _remoteUids.remove(remoteUid);
+              notifyListeners();
+            },
         onLeaveChannel: (RtcConnection connection, RtcStats stats) {
           _isJoined = false;
           _localUid = null;
@@ -70,7 +76,7 @@ class AgoraService extends ChangeNotifier {
 
   Future<void> joinChannel(String channelName, {String token = ''}) async {
     if (_engine == null) await initialize();
-    
+
     await _engine!.joinChannel(
       token: token,
       channelId: channelName,
