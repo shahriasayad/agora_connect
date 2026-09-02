@@ -3,6 +3,9 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.all {
+        exclude(group = "io.agora.rtc", module = "agora-special-full")
+    }
 }
 
 val newBuildDir: Directory =
