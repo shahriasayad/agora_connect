@@ -28,6 +28,8 @@ class AgoraService extends ChangeNotifier {
       throw Exception('Agora App ID is missing from configuration.');
     }
 
+    if (_engine != null) return;
+
     // Create RtcEngine instance
     _engine = createAgoraRtcEngine();
     await _engine!.initialize(
@@ -43,6 +45,9 @@ class AgoraService extends ChangeNotifier {
         onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
           _isJoined = true;
           _localUid = connection.localUid;
+          try {
+            _engine?.setEnableSpeakerphone(true);
+          } catch (_) {}
           notifyListeners();
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
@@ -70,8 +75,14 @@ class AgoraService extends ChangeNotifier {
       ),
     );
 
+    // Enable audio and set volumes
+    await _engine!.enableAudio();
+    await _engine!.adjustPlaybackSignalVolume(100);
+    await _engine!.adjustRecordingSignalVolume(100);
+
     // Enable video by default for Phase 3 readiness
     await _engine!.enableVideo();
+    await _engine!.startPreview();
   }
 
   Future<void> joinChannel(String channelName, {String token = ''}) async {
@@ -82,7 +93,7 @@ class AgoraService extends ChangeNotifier {
       channelId: channelName,
       uid: 0, // 0 lets Agora assign a UID automatically
       options: const ChannelMediaOptions(
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
         autoSubscribeAudio: true,
         autoSubscribeVideo: true,
         publishCameraTrack: true,
