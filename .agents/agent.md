@@ -20,7 +20,7 @@ Understanding is more important than coding.
 
 # Flutter Architecture
 * Use **Flutter + GetX** only.
-* Use **StatelessWidget** only. Never use **StatefulWidget**.
+* Use **StatelessWidget** only. use **StatefulWidget** only when it really requred.
 * Keep all business logic, state management, validation, filtering, pagination, calculations, API handling, and data flow inside **controllers** and **services**.
 * Screens should contain only:
   * UI rendering

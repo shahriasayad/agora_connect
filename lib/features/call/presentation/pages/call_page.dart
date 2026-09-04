@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 
 import 'package:agora_connect/core/services/agora_service.dart';
 
@@ -16,7 +16,7 @@ class _CallPageState extends State<CallPage> {
     super.initState();
     // Initialize Agora when the page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AgoraService>().initialize();
+      Get.find<AgoraService>().initialize();
     });
   }
 
@@ -24,8 +24,8 @@ class _CallPageState extends State<CallPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Call Page')),
-      body: Consumer<AgoraService>(
-        builder: (context, agoraService, child) {
+      body: GetBuilder<AgoraService>(
+        builder: (agoraService) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -1,10 +1,11 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; // for debugPrint
+import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../config/agora_config.dart';
 
-class AgoraService extends ChangeNotifier {
+class AgoraService extends GetxController {
   RtcEngine? _engine;
   int? _localUid;
   final Set<int> _remoteUids = {};
@@ -48,11 +49,11 @@ class AgoraService extends ChangeNotifier {
           try {
             _engine?.setEnableSpeakerphone(true);
           } catch (_) {}
-          notifyListeners();
+          update();
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
           _remoteUids.add(remoteUid);
-          notifyListeners();
+          update();
         },
         onUserOffline:
             (
@@ -61,13 +62,13 @@ class AgoraService extends ChangeNotifier {
               UserOfflineReasonType reason,
             ) {
               _remoteUids.remove(remoteUid);
-              notifyListeners();
+              update();
             },
         onLeaveChannel: (RtcConnection connection, RtcStats stats) {
           _isJoined = false;
           _localUid = null;
           _remoteUids.clear();
-          notifyListeners();
+          update();
         },
         onError: (ErrorCodeType err, String msg) {
           debugPrint('[Agora Error] $err: $msg');
@@ -109,9 +110,9 @@ class AgoraService extends ChangeNotifier {
   }
 
   @override
-  void dispose() {
+  void onClose() {
     leaveChannel();
     _engine?.release();
-    super.dispose();
+    super.onClose();
   }
 }
