@@ -5,6 +5,10 @@ class AgoraConfig {
     return dotenv.env['AGORA_APP_ID'] ?? '';
   }
 
+  static String get appCertificate {
+    return dotenv.env['AGORA_APP_CERTIFICATE'] ?? '';
+  }
+
   static String get apiBaseUrl {
     return dotenv.env['API_BASE_URL'] ?? '';
   }

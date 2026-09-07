@@ -2,6 +2,7 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart'; // for debugPrint
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:agora_token_service/agora_token_service.dart';
 
 import '../config/agora_config.dart';
 
@@ -89,8 +90,21 @@ class AgoraService extends GetxController {
   Future<void> joinChannel(String channelName, {String token = ''}) async {
     if (_engine == null) await initialize();
 
+    String actualToken = token;
+    if (actualToken.isEmpty && AgoraConfig.appCertificate.isNotEmpty) {
+      final expireTime = DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
+      actualToken = RtcTokenBuilder.build(
+        appId: AgoraConfig.appId,
+        appCertificate: AgoraConfig.appCertificate,
+        channelName: channelName,
+        uid: '0',
+        role: RtcRole.publisher,
+        expireTimestamp: expireTime,
+      );
+    }
+
     await _engine!.joinChannel(
-      token: token,
+      token: actualToken,
       channelId: channelName,
       uid: 0, // 0 lets Agora assign a UID automatically
       options: const ChannelMediaOptions(
