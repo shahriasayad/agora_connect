@@ -23,6 +23,9 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
+// Override compileSdkVersion for plugin subprojects.
+// The agora_rtc_engine plugin ships with compileSdk 31, but its transitive
+// AndroidX dependencies require compileSdk >= 34.
 subprojects {
     if (project.name != "app") {
         afterEvaluate {
@@ -32,4 +35,3 @@ subprojects {
         }
     }
 }
-
