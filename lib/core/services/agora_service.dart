@@ -6,6 +6,16 @@ import 'package:agora_token_service/agora_token_service.dart';
 
 import '../config/agora_config.dart';
 
+enum CallState {
+  idle,
+  outgoingRinging,
+  incomingRinging,
+  connected,
+  rejected,
+  ended,
+  failed,
+}
+
 class AgoraService extends GetxController {
   RtcEngine? _engine;
   int? _localUid;
@@ -13,10 +23,18 @@ class AgoraService extends GetxController {
   bool _isJoined = false;
   bool _isMuted = false;
   bool _isVideoOff = false;
+  bool _isSpeakerOn = true;
+  ConnectionStateType _connectionState = ConnectionStateType.connectionStateDisconnected;
+  CallState _callState = CallState.idle;
+  String? _currentCallerId; // Store caller info
 
   bool get isJoined => _isJoined;
   bool get isMuted => _isMuted;
   bool get isVideoOff => _isVideoOff;
+  bool get isSpeakerOn => _isSpeakerOn;
+  ConnectionStateType get connectionState => _connectionState;
+  CallState get callState => _callState;
+  String? get currentCallerId => _currentCallerId;
   Set<int> get remoteUids => _remoteUids;
   int? get localUid => _localUid;
   RtcEngine get engine {
@@ -67,12 +85,26 @@ class AgoraService extends GetxController {
               UserOfflineReasonType reason,
             ) {
               _remoteUids.remove(remoteUid);
+              if (_remoteUids.isEmpty) {
+                // Return to Join screen if the only remote user leaves
+                leaveChannel();
+              }
               update();
             },
         onLeaveChannel: (RtcConnection connection, RtcStats stats) {
           _isJoined = false;
           _localUid = null;
           _remoteUids.clear();
+          _isMuted = false;
+          _isVideoOff = false;
+          _isSpeakerOn = true;
+          _connectionState = ConnectionStateType.connectionStateDisconnected;
+          _callState = CallState.idle;
+          _currentCallerId = null;
+          update();
+        },
+        onConnectionStateChanged: (RtcConnection connection, ConnectionStateType state, ConnectionChangedReasonType reason) {
+          _connectionState = state;
           update();
         },
         onError: (ErrorCodeType err, String msg) {
@@ -121,6 +153,68 @@ class AgoraService extends GetxController {
     );
   }
 
+  // --- SIGNALING FOUNDATION ---
+
+  Future<void> startOutgoingCall(String targetUserId) async {
+    if (_callState != CallState.idle) return;
+    _callState = CallState.outgoingRinging;
+    _currentCallerId = targetUserId;
+    update();
+
+    // TODO: [Backend Requirement] POST /api/call/initiate with targetUserId.
+    // Simulate auto-accept for testing if no backend is present.
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_callState == CallState.outgoingRinging) {
+        // Simulate remote accepted
+        _callState = CallState.connected;
+        update();
+        joinChannel('test_channel');
+      }
+    });
+  }
+
+  void triggerIncomingCall(String callerId) {
+    if (_callState != CallState.idle) return;
+    _callState = CallState.incomingRinging;
+    _currentCallerId = callerId;
+    update();
+  }
+
+  Future<void> acceptCall() async {
+    if (_callState != CallState.incomingRinging) return;
+    
+    // TODO: [Backend Requirement] POST /api/call/accept
+    _callState = CallState.connected;
+    update();
+    await joinChannel('test_channel');
+  }
+
+  Future<void> rejectCall() async {
+    if (_callState != CallState.incomingRinging) return;
+
+    // TODO: [Backend Requirement] POST /api/call/reject
+    _callState = CallState.rejected;
+    update();
+    
+    await Future.delayed(const Duration(seconds: 2));
+    _resetCallState();
+  }
+
+  Future<void> endCall() async {
+    // TODO: [Backend Requirement] POST /api/call/end
+    if (_isJoined) {
+      await leaveChannel();
+    } else {
+      _resetCallState();
+    }
+  }
+
+  void _resetCallState() {
+    _callState = CallState.idle;
+    _currentCallerId = null;
+    update();
+  }
+
   Future<void> leaveChannel() async {
     if (_engine != null) {
       await _engine!.leaveChannel();
@@ -146,6 +240,14 @@ class AgoraService extends GetxController {
   Future<void> switchCamera() async {
     if (_engine != null) {
       await _engine!.switchCamera();
+    }
+  }
+
+  Future<void> toggleSpeaker() async {
+    if (_engine != null) {
+      _isSpeakerOn = !_isSpeakerOn;
+      await _engine!.setEnableSpeakerphone(_isSpeakerOn);
+      update();
     }
   }
 
