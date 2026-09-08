@@ -84,7 +84,10 @@ class _CallPageState extends State<CallPage> {
       return AgoraVideoView(
         controller: VideoViewController(
           rtcEngine: agoraService.engine,
-          canvas: const VideoCanvas(uid: 0),
+          canvas: const VideoCanvas(
+            uid: 0,
+            renderMode: RenderModeType.renderModeHidden,
+          ),
         ),
       );
     } catch (e) {
@@ -97,7 +100,10 @@ class _CallPageState extends State<CallPage> {
       return AgoraVideoView(
         controller: VideoViewController.remote(
           rtcEngine: agoraService.engine,
-          canvas: VideoCanvas(uid: agoraService.remoteUids.first),
+          canvas: VideoCanvas(
+            uid: agoraService.remoteUids.first,
+            renderMode: RenderModeType.renderModeFit,
+          ),
           connection: const RtcConnection(channelId: 'test_channel'),
         ),
       );
