@@ -73,6 +73,18 @@ class _CallPageState extends State<CallPage> {
                           padding: const EdgeInsets.all(12),
                         ),
                       ),
+                      const SizedBox(width: 15),
+                      IconButton(
+                        onPressed: () => agoraService.toggleVideo(),
+                        icon: Icon(
+                          agoraService.isVideoOff ? Icons.videocam_off : Icons.videocam,
+                          color: agoraService.isVideoOff ? Colors.red : Colors.blue,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                      ),
                       const SizedBox(width: 20),
                       ElevatedButton(
                         onPressed: () => agoraService.leaveChannel(),
@@ -91,6 +103,9 @@ class _CallPageState extends State<CallPage> {
   }
 
   Widget _localVideo(AgoraService agoraService) {
+    if (agoraService.isVideoOff) {
+      return const Center(child: Icon(Icons.videocam_off, color: Colors.white, size: 40));
+    }
     // If not joined, we can still show the preview if engine is initialized.
     // However, engine might not be initialized immediately on first frame.
     try {
