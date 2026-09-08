@@ -61,12 +61,25 @@ class _CallPageState extends State<CallPage> {
                         onPressed: () => agoraService.joinChannel('test_channel'),
                         child: const Text('Join Channel'),
                       )
-                    else
+                    else ...[
+                      IconButton(
+                        onPressed: () => agoraService.toggleMute(),
+                        icon: Icon(
+                          agoraService.isMuted ? Icons.mic_off : Icons.mic,
+                          color: agoraService.isMuted ? Colors.red : Colors.blue,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
                       ElevatedButton(
                         onPressed: () => agoraService.leaveChannel(),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                         child: const Text('Leave Call', style: TextStyle(color: Colors.white)),
                       ),
+                    ],
                   ],
                 ),
               ),

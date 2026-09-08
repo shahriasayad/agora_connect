@@ -11,8 +11,10 @@ class AgoraService extends GetxController {
   int? _localUid;
   final Set<int> _remoteUids = {};
   bool _isJoined = false;
+  bool _isMuted = false;
 
   bool get isJoined => _isJoined;
+  bool get isMuted => _isMuted;
   Set<int> get remoteUids => _remoteUids;
   int? get localUid => _localUid;
   RtcEngine get engine {
@@ -120,6 +122,14 @@ class AgoraService extends GetxController {
   Future<void> leaveChannel() async {
     if (_engine != null) {
       await _engine!.leaveChannel();
+    }
+  }
+
+  Future<void> toggleMute() async {
+    if (_engine != null) {
+      _isMuted = !_isMuted;
+      await _engine!.muteLocalAudioStream(_isMuted);
+      update();
     }
   }
 
