@@ -143,6 +143,12 @@ class AgoraService extends GetxController {
     }
   }
 
+  Future<void> switchCamera() async {
+    if (_engine != null) {
+      await _engine!.switchCamera();
+    }
+  }
+
   @override
   void onClose() {
     leaveChannel();

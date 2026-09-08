@@ -85,6 +85,15 @@ class _CallPageState extends State<CallPage> {
                           padding: const EdgeInsets.all(12),
                         ),
                       ),
+                      const SizedBox(width: 15),
+                      IconButton(
+                        onPressed: () => agoraService.switchCamera(),
+                        icon: const Icon(Icons.flip_camera_ios, color: Colors.blue),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                      ),
                       const SizedBox(width: 20),
                       ElevatedButton(
                         onPressed: () => agoraService.leaveChannel(),
