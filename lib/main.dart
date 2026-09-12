@@ -5,7 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 
 import 'core/services/agora_service.dart';
-import 'features/call/presentation/pages/call_page.dart';
+import 'core/services/chat_service.dart';
+import 'features/home/presentation/pages/home_page.dart';
 import 'util/screen_util.dart';
 
 Future<void> main() async {
@@ -13,6 +14,7 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   Get.put(AgoraService());
+  Get.put(ChatService());
 
   runApp(const MyApp());
 }
@@ -40,7 +42,7 @@ class MyApp extends StatelessWidget {
         AppScreenUtil.init(context);
         return child!;
       },
-      home: const CallPage(),
+      home: const HomePage(),
     );
   }
 }

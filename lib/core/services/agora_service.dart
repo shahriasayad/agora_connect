@@ -1,3 +1,4 @@
+import 'package:agora_connect/core/services/chat_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -67,6 +68,7 @@ class AgoraService extends GetxController {
   bool _isCurrentCallOutgoing = false;
 
   bool get isJoined => _isJoined;
+  bool get isSignalingJoined => _isSignalingJoined;
   bool get isMuted => _isMuted;
   bool get isVideoOff => _isVideoOff;
   bool get isSpeakerOn => _isSpeakerOn;
@@ -193,7 +195,7 @@ class AgoraService extends GetxController {
     );
   }
 
-  void _sendSignalingMessage(Map<String, dynamic> data) {
+  void sendSignalingMessage(Map<String, dynamic> data) {
     if (_streamId != null && _engine != null && _isSignalingJoined) {
       try {
         _engine!.sendStreamMessage(
@@ -215,10 +217,17 @@ class AgoraService extends GetxController {
       final type = data['type'];
       final from = data['from'];
 
+      if (type == 'CHAT') {
+        if (Get.isRegistered<ChatService>()) {
+          Get.find<ChatService>().receiveMessage(from, data['content'], data['msgId'] ?? DateTime.now().millisecondsSinceEpoch.toString());
+        }
+        return;
+      }
+
       if (type == 'CALL') {
         if (_callState != CallState.idle) {
           // busy
-          _sendSignalingMessage({"type": "DECLINE", "from": myUserId, "to": from, "reason": "busy"});
+          sendSignalingMessage({"type": "DECLINE", "from": myUserId, "to": from, "reason": "busy"});
           return;
         }
         _isAudioCall = data['isAudio'] ?? false;
@@ -351,7 +360,7 @@ class AgoraService extends GetxController {
     _isCurrentCallOutgoing = true;
     _callChannel = 'call_${myUserId}_$targetUserId';
     
-    _sendSignalingMessage({
+    sendSignalingMessage({
       "type": "CALL",
       "from": myUserId,
       "to": targetUserId,
@@ -378,7 +387,7 @@ class AgoraService extends GetxController {
     _outgoingTimeoutTimer?.cancel();
     _stopRinging();
     
-    _sendSignalingMessage({
+    sendSignalingMessage({
       "type": "ACCEPT",
       "from": myUserId,
       "to": _currentCallerId
@@ -395,7 +404,7 @@ class AgoraService extends GetxController {
     _outgoingTimeoutTimer?.cancel();
     _stopRinging();
     
-    _sendSignalingMessage({
+    sendSignalingMessage({
       "type": "DECLINE",
       "from": myUserId,
       "to": _currentCallerId
@@ -414,7 +423,7 @@ class AgoraService extends GetxController {
     _stopRinging();
     
     if (_callState == CallState.outgoingRinging) {
-      _sendSignalingMessage({
+      sendSignalingMessage({
         "type": "CANCEL",
         "from": myUserId,
         "to": _currentCallerId
