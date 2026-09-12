@@ -21,6 +21,24 @@ enum CallState {
   failed,
 }
 
+class CallHistoryItem {
+  final String remoteUserId;
+  final bool isOutgoing;
+  final bool isAudio;
+  final DateTime timestamp;
+  final int durationSeconds;
+  final String status;
+
+  CallHistoryItem({
+    required this.remoteUserId,
+    required this.isOutgoing,
+    required this.isAudio,
+    required this.timestamp,
+    required this.durationSeconds,
+    required this.status,
+  });
+}
+
 class AgoraService extends GetxController {
   RtcEngine? _engine;
   int? _localUid;
@@ -43,6 +61,10 @@ class AgoraService extends GetxController {
   Timer? _durationTimer;
   int callDuration = 0;
   Timer? _outgoingTimeoutTimer;
+  
+  // Call History
+  final List<CallHistoryItem> callHistory = [];
+  bool _isCurrentCallOutgoing = false;
 
   bool get isJoined => _isJoined;
   bool get isMuted => _isMuted;
@@ -120,6 +142,7 @@ class AgoraService extends GetxController {
               _remoteUids.remove(remoteUid);
               if (_remoteUids.isEmpty && _callState == CallState.connected) {
                 // Other user left the call
+                _addToHistory('Ended');
                 _endCallCleanly();
               }
               update();
@@ -200,6 +223,7 @@ class AgoraService extends GetxController {
         }
         _isAudioCall = data['isAudio'] ?? false;
         _currentCallerId = from;
+        _isCurrentCallOutgoing = false;
         _callChannel = data['channel'];
         _callState = CallState.incomingRinging;
         _startRinging();
@@ -208,6 +232,7 @@ class AgoraService extends GetxController {
         _outgoingTimeoutTimer?.cancel();
         _outgoingTimeoutTimer = Timer(const Duration(seconds: 45), () {
           if (_callState == CallState.incomingRinging) {
+             _addToHistory('Missed');
              _resetCallState();
           }
         });
@@ -226,6 +251,7 @@ class AgoraService extends GetxController {
           _outgoingTimeoutTimer?.cancel();
           _stopRinging();
           _callState = CallState.rejected;
+          _addToHistory('Declined');
           update();
           Future.delayed(const Duration(seconds: 2), () {
             if (_callState == CallState.rejected) _resetCallState();
@@ -235,6 +261,7 @@ class AgoraService extends GetxController {
         if (_callState == CallState.incomingRinging && _currentCallerId == from) {
           _stopRinging();
           _outgoingTimeoutTimer?.cancel();
+          _addToHistory('Missed');
           _resetCallState();
         }
       }
@@ -290,6 +317,19 @@ class AgoraService extends GetxController {
     );
   }
 
+  void _addToHistory(String status) {
+    if (_currentCallerId == null) return;
+    callHistory.insert(0, CallHistoryItem(
+      remoteUserId: _currentCallerId!,
+      isOutgoing: _isCurrentCallOutgoing,
+      isAudio: _isAudioCall,
+      timestamp: DateTime.now(),
+      durationSeconds: callDuration,
+      status: status,
+    ));
+    update();
+  }
+
   // --- SIGNALING ACTIONS ---
 
   Future<void> startOutgoingCall(String targetUserId, {bool isAudioCall = false}) async {
@@ -308,6 +348,7 @@ class AgoraService extends GetxController {
     _isAudioCall = isAudioCall;
     _callState = CallState.outgoingRinging;
     _currentCallerId = targetUserId;
+    _isCurrentCallOutgoing = true;
     _callChannel = 'call_${myUserId}_$targetUserId';
     
     _sendSignalingMessage({
@@ -323,6 +364,7 @@ class AgoraService extends GetxController {
     _outgoingTimeoutTimer?.cancel();
     _outgoingTimeoutTimer = Timer(const Duration(seconds: 45), () {
       if (_callState == CallState.outgoingRinging) {
+        _addToHistory('No Answer');
         endCall();
       }
     });
@@ -360,6 +402,7 @@ class AgoraService extends GetxController {
     });
     
     _callState = CallState.rejected;
+    _addToHistory('Rejected');
     update();
     
     await Future.delayed(const Duration(seconds: 2));
@@ -376,8 +419,10 @@ class AgoraService extends GetxController {
         "from": myUserId,
         "to": _currentCallerId
       });
+      _addToHistory('Cancelled');
       _resetCallState();
     } else if (_isJoined || _callState == CallState.connected) {
+      _addToHistory('Ended');
       await _endCallCleanly();
     } else {
       _resetCallState();

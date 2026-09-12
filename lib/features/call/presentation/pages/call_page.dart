@@ -14,6 +14,7 @@ class CallPage extends StatefulWidget {
 
 class _CallPageState extends State<CallPage> {
   final TextEditingController _targetIdController = TextEditingController();
+  final FocusNode _targetIdFocus = FocusNode();
 
   @override
   void initState() {
@@ -24,6 +25,7 @@ class _CallPageState extends State<CallPage> {
   @override
   void dispose() {
     _targetIdController.dispose();
+    _targetIdFocus.dispose();
     super.dispose();
   }
 
@@ -47,16 +49,24 @@ class _CallPageState extends State<CallPage> {
             ),
             body: Stack(
               children: [
+                // Call History when idle
+                if (agoraService.callState == CallState.idle)
+                   _buildCallHistory(agoraService),
+                
                 // Remote video or placeholder
-                Center(
-                  child: _remoteVideo(agoraService),
-                ),
+                if (agoraService.callState != CallState.idle)
+                  Center(
+                    child: _remoteVideo(agoraService),
+                  ),
+                
                 // Connection Status
-                Positioned(
-                  top: 20.h,
-                  left: 20.w,
-                  child: SafeArea(child: _buildConnectionStatus(agoraService)),
-                ),
+                if (agoraService.callState != CallState.idle)
+                  Positioned(
+                    top: 20.h,
+                    left: 20.w,
+                    child: SafeArea(child: _buildConnectionStatus(agoraService)),
+                  ),
+                
                 // Local video preview
                 if (agoraService.isJoined && !agoraService.isAudioCall)
                   Positioned(
@@ -73,6 +83,7 @@ class _CallPageState extends State<CallPage> {
                       child: _localVideo(agoraService),
                     ),
                   ),
+                
                 // Bottom control buttons
                 Positioned(
                   bottom: 30.h,
@@ -85,6 +96,35 @@ class _CallPageState extends State<CallPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildCallHistory(AgoraService agoraService) {
+    if (agoraService.callHistory.isEmpty) {
+      return Center(
+        child: Text('No call history', style: TextStyle(color: Colors.grey, fontSize: 16.sp)),
+      );
+    }
+    return ListView.builder(
+      padding: EdgeInsets.only(bottom: 200.h), // space for bottom controls
+      itemCount: agoraService.callHistory.length,
+      itemBuilder: (context, index) {
+        final call = agoraService.callHistory[index];
+        final icon = call.isOutgoing 
+            ? (call.status == 'Ended' ? Icons.call_made : Icons.call_missed_outgoing)
+            : (call.status == 'Ended' ? Icons.call_received : Icons.call_missed);
+        final color = (call.status == 'Missed' || call.status == 'Declined' || call.status == 'Rejected' || call.status == 'No Answer' || call.status == 'Cancelled') ? Colors.red : Colors.green;
+        
+        return ListTile(
+          leading: Icon(icon, color: color),
+          title: Text('User: ${call.remoteUserId}'),
+          subtitle: Text('${call.isAudio ? 'Audio' : 'Video'} • ${call.status}'),
+          trailing: Text(call.durationSeconds > 0 ? _formatDuration(call.durationSeconds) : ''),
+          onTap: () {
+            _targetIdController.text = call.remoteUserId;
+          },
+        );
+      },
     );
   }
 
@@ -101,9 +141,12 @@ class _CallPageState extends State<CallPage> {
             children: [
               TextField(
                 controller: _targetIdController,
+                focusNode: _targetIdFocus,
                 decoration: const InputDecoration(
                   labelText: 'Target User ID',
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -114,6 +157,7 @@ class _CallPageState extends State<CallPage> {
                   ElevatedButton(
                     onPressed: () {
                        if (_targetIdController.text.isNotEmpty) {
+                          _targetIdFocus.unfocus();
                           agoraService.startOutgoingCall(_targetIdController.text.trim(), isAudioCall: false);
                        }
                     },
@@ -123,6 +167,7 @@ class _CallPageState extends State<CallPage> {
                   ElevatedButton(
                     onPressed: () {
                        if (_targetIdController.text.isNotEmpty) {
+                          _targetIdFocus.unfocus();
                           agoraService.startOutgoingCall(_targetIdController.text.trim(), isAudioCall: true);
                        }
                     },
