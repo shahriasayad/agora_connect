@@ -44,87 +44,104 @@ class AgoraService extends GetxController {
     return _engine!;
   }
 
-  Future<void> initialize() async {
-    // Request permissions first
-    await [Permission.camera, Permission.microphone].request();
+  bool _isAudioCall = false;
+  bool get isAudioCall => _isAudioCall;
+
+  Future<void> initialize({bool isAudioCall = false}) async {
+    _isAudioCall = isAudioCall;
+
+    // Request permissions based on call type
+    List<Permission> permissions = [Permission.microphone];
+    if (!isAudioCall) {
+      permissions.add(Permission.camera);
+    }
+    await permissions.request();
 
     if (AgoraConfig.appId.isEmpty) {
       throw Exception('Agora App ID is missing from configuration.');
     }
 
-    if (_engine != null) return;
+    if (_engine == null) {
+      // Create RtcEngine instance
+      _engine = createAgoraRtcEngine();
+      await _engine!.initialize(
+        RtcEngineContext(
+          appId: AgoraConfig.appId,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
 
-    // Create RtcEngine instance
-    _engine = createAgoraRtcEngine();
-    await _engine!.initialize(
-      RtcEngineContext(
-        appId: AgoraConfig.appId,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ),
-    );
-
-    // Register event handlers
-    _engine!.registerEventHandler(
-      RtcEngineEventHandler(
-        onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-          _isJoined = true;
-          _localUid = connection.localUid;
-          try {
-            _engine?.setEnableSpeakerphone(true);
-          } catch (_) {}
-          update();
-        },
-        onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          _remoteUids.add(remoteUid);
-          update();
-        },
-        onUserOffline:
-            (
-              RtcConnection connection,
-              int remoteUid,
-              UserOfflineReasonType reason,
-            ) {
-              _remoteUids.remove(remoteUid);
-              if (_remoteUids.isEmpty) {
-                // Return to Join screen if the only remote user leaves
-                leaveChannel();
-              }
-              update();
-            },
-        onLeaveChannel: (RtcConnection connection, RtcStats stats) {
-          _isJoined = false;
-          _localUid = null;
-          _remoteUids.clear();
-          _isMuted = false;
-          _isVideoOff = false;
-          _isSpeakerOn = true;
-          _connectionState = ConnectionStateType.connectionStateDisconnected;
-          _callState = CallState.idle;
-          _currentCallerId = null;
-          update();
-        },
-        onConnectionStateChanged: (RtcConnection connection, ConnectionStateType state, ConnectionChangedReasonType reason) {
-          _connectionState = state;
-          update();
-        },
-        onError: (ErrorCodeType err, String msg) {
-          debugPrint('[Agora Error] $err: $msg');
-        },
-      ),
-    );
+      // Register event handlers
+      _engine!.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+            _isJoined = true;
+            _localUid = connection.localUid;
+            try {
+              _engine?.setEnableSpeakerphone(true);
+            } catch (_) {}
+            update();
+          },
+          onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
+            _remoteUids.add(remoteUid);
+            update();
+          },
+          onUserOffline:
+              (
+                RtcConnection connection,
+                int remoteUid,
+                UserOfflineReasonType reason,
+              ) {
+                _remoteUids.remove(remoteUid);
+                if (_remoteUids.isEmpty) {
+                  // Return to Join screen if the only remote user leaves
+                  leaveChannel();
+                }
+                update();
+              },
+          onLeaveChannel: (RtcConnection connection, RtcStats stats) {
+            _isJoined = false;
+            _localUid = null;
+            _remoteUids.clear();
+            _isMuted = false;
+            // Retain _isAudioCall state just in case, but usually reset in _resetCallState
+            _isVideoOff = _isAudioCall;
+            _isSpeakerOn = true;
+            _connectionState = ConnectionStateType.connectionStateDisconnected;
+            _callState = CallState.idle;
+            _currentCallerId = null;
+            update();
+          },
+          onConnectionStateChanged: (RtcConnection connection, ConnectionStateType state, ConnectionChangedReasonType reason) {
+            _connectionState = state;
+            update();
+          },
+          onError: (ErrorCodeType err, String msg) {
+            debugPrint('[Agora Error] $err: $msg');
+          },
+        ),
+      );
+    }
 
     // Enable audio and set volumes
     await _engine!.enableAudio();
     await _engine!.adjustPlaybackSignalVolume(100);
     await _engine!.adjustRecordingSignalVolume(100);
 
-    // Enable video by default for Phase 3 readiness
-    await _engine!.enableVideo();
-    await _engine!.startPreview();
+    // Setup video based on call type
+    if (isAudioCall) {
+      await _engine!.disableVideo();
+      _isVideoOff = true;
+    } else {
+      await _engine!.enableVideo();
+      await _engine!.startPreview();
+      _isVideoOff = false;
+    }
   }
 
   Future<void> joinChannel(String channelName, {String token = ''}) async {
-    if (_engine == null) await initialize();
+    // Always call initialize to ensure correct permissions and engine state (audio vs video)
+    await initialize(isAudioCall: _isAudioCall);
 
     String actualToken = token;
     if (actualToken.isEmpty && AgoraConfig.appCertificate.isNotEmpty) {
@@ -143,11 +160,11 @@ class AgoraService extends GetxController {
       token: actualToken,
       channelId: channelName,
       uid: 0, // 0 lets Agora assign a UID automatically
-      options: const ChannelMediaOptions(
+      options: ChannelMediaOptions(
         channelProfile: ChannelProfileType.channelProfileCommunication,
         autoSubscribeAudio: true,
-        autoSubscribeVideo: true,
-        publishCameraTrack: true,
+        autoSubscribeVideo: !_isAudioCall,
+        publishCameraTrack: !_isAudioCall,
         publishMicrophoneTrack: true,
       ),
     );
@@ -155,8 +172,9 @@ class AgoraService extends GetxController {
 
   // --- SIGNALING FOUNDATION ---
 
-  Future<void> startOutgoingCall(String targetUserId) async {
+  Future<void> startOutgoingCall(String targetUserId, {bool isAudioCall = false}) async {
     if (_callState != CallState.idle) return;
+    _isAudioCall = isAudioCall;
     _callState = CallState.outgoingRinging;
     _currentCallerId = targetUserId;
     update();
@@ -173,8 +191,9 @@ class AgoraService extends GetxController {
     });
   }
 
-  void triggerIncomingCall(String callerId) {
+  void triggerIncomingCall(String callerId, {bool isAudioCall = false}) {
     if (_callState != CallState.idle) return;
+    _isAudioCall = isAudioCall;
     _callState = CallState.incomingRinging;
     _currentCallerId = callerId;
     update();

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class AppScreenUtil {
   static double screenWidth = 0;
   static double screenHeight = 0;
+
   static Orientation orientation = Orientation.portrait;
   static bool _isInitialized = false;
 

@@ -16,54 +16,53 @@ class _CallPageState extends State<CallPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize Agora when the page loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<AgoraService>().initialize();
-    });
+    // Engine will be initialized when a call is started or accepted.
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Video Call')),
       body: GetBuilder<AgoraService>(
         builder: (agoraService) {
-          return Stack(
-            children: [
-              // Remote video or placeholder
-              Center(
-                child: _remoteVideo(agoraService),
-              ),
-              // Connection Status
-              Positioned(
-                top: 20.h,
-                left: 20.w,
-                child: SafeArea(child: _buildConnectionStatus(agoraService)),
-              ),
-              // Local video preview
-              if (agoraService.isJoined)
+          return Scaffold(
+            appBar: AppBar(title: Text(agoraService.isAudioCall ? 'Audio Call' : 'Video Call')),
+            body: Stack(
+              children: [
+                // Remote video or placeholder
+                Center(
+                  child: _remoteVideo(agoraService),
+                ),
+                // Connection Status
                 Positioned(
                   top: 20.h,
-                  right: 20.w,
-                  width: 120.w,
-                  height: 160.h,
-                  child: Container(
-                    clipBehavior: Clip.hardEdge,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.r),
-                      color: Colors.black54,
-                    ),
-                    child: _localVideo(agoraService),
-                  ),
+                  left: 20.w,
+                  child: SafeArea(child: _buildConnectionStatus(agoraService)),
                 ),
-              // Bottom control buttons
-              Positioned(
-                bottom: 30.h,
-                left: 0,
-                right: 0,
-                child: _buildBottomControls(agoraService),
-              ),
-            ],
+                // Local video preview
+                if (agoraService.isJoined && !agoraService.isAudioCall)
+                  Positioned(
+                    top: 20.h,
+                    right: 20.w,
+                    width: 120.w,
+                    height: 160.h,
+                    child: Container(
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.r),
+                        color: Colors.black54,
+                      ),
+                      child: _localVideo(agoraService),
+                    ),
+                  ),
+                // Bottom control buttons
+                Positioned(
+                  bottom: 30.h,
+                  left: 0,
+                  right: 0,
+                  child: _buildBottomControls(agoraService),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -76,17 +75,37 @@ class _CallPageState extends State<CallPage> {
       case CallState.rejected:
       case CallState.ended:
       case CallState.failed:
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            ElevatedButton(
-              onPressed: () => agoraService.startOutgoingCall('user_123'),
-              child: const Text('Call user_123'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => agoraService.startOutgoingCall('user_123', isAudioCall: false),
+                  child: const Text('Video Call'),
+                ),
+                15.hSpace,
+                ElevatedButton(
+                  onPressed: () => agoraService.triggerIncomingCall('user_456', isAudioCall: false),
+                  child: const Text('Incoming Video Call'),
+                ),
+              ],
             ),
-            15.hSpace,
-            ElevatedButton(
-              onPressed: () => agoraService.triggerIncomingCall('user_456'),
-              child: const Text('Simulate Incoming Call'),
+            10.vSpace,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => agoraService.startOutgoingCall('user_123', isAudioCall: true),
+                  child: const Text('Audio Call'),
+                ),
+                15.hSpace,
+                ElevatedButton(
+                  onPressed: () => agoraService.triggerIncomingCall('user_456', isAudioCall: true),
+                  child: const Text('Incoming Audio Call'),
+                ),
+              ],
             ),
           ],
         );
@@ -133,27 +152,29 @@ class _CallPageState extends State<CallPage> {
                 padding: EdgeInsets.all(12.w),
               ),
             ),
-            15.hSpace,
-            IconButton(
-              onPressed: () => agoraService.toggleVideo(),
-              icon: Icon(
-                agoraService.isVideoOff ? Icons.videocam_off : Icons.videocam,
-                color: agoraService.isVideoOff ? Colors.red : Colors.blue,
+            if (!agoraService.isAudioCall) ...[
+              15.hSpace,
+              IconButton(
+                onPressed: () => agoraService.toggleVideo(),
+                icon: Icon(
+                  agoraService.isVideoOff ? Icons.videocam_off : Icons.videocam,
+                  color: agoraService.isVideoOff ? Colors.red : Colors.blue,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: EdgeInsets.all(12.w),
+                ),
               ),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                padding: EdgeInsets.all(12.w),
+              15.hSpace,
+              IconButton(
+                onPressed: () => agoraService.switchCamera(),
+                icon: const Icon(Icons.flip_camera_ios, color: Colors.blue),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: EdgeInsets.all(12.w),
+                ),
               ),
-            ),
-            15.hSpace,
-            IconButton(
-              onPressed: () => agoraService.switchCamera(),
-              icon: const Icon(Icons.flip_camera_ios, color: Colors.blue),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                padding: EdgeInsets.all(12.w),
-              ),
-            ),
+            ],
             15.hSpace,
             IconButton(
               onPressed: () => agoraService.toggleSpeaker(),
@@ -270,16 +291,28 @@ class _CallPageState extends State<CallPage> {
       );
     }
     if (agoraService.remoteUids.isNotEmpty) {
-      return AgoraVideoView(
-        controller: VideoViewController.remote(
-          rtcEngine: agoraService.engine,
-          canvas: VideoCanvas(
-            uid: agoraService.remoteUids.first,
-            renderMode: RenderModeType.renderModeFit,
+      if (agoraService.isAudioCall) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.person, size: 100.w, color: Colors.blueGrey),
+            20.vSpace,
+            Text('Connected with ${agoraService.currentCallerId ?? ''}',
+                style: TextStyle(fontSize: 18.sp)),
+          ],
+        );
+      } else {
+        return AgoraVideoView(
+          controller: VideoViewController.remote(
+            rtcEngine: agoraService.engine,
+            canvas: VideoCanvas(
+              uid: agoraService.remoteUids.first,
+              renderMode: RenderModeType.renderModeFit,
+            ),
+            connection: const RtcConnection(channelId: 'test_channel'),
           ),
-          connection: const RtcConnection(channelId: 'test_channel'),
-        ),
-      );
+        );
+      }
     } else {
       return const Text(
         'Waiting for other user to join...',
