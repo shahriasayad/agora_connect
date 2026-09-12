@@ -15,8 +15,26 @@ class ChatListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Chats', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Chats', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: [
+          GetBuilder<ChatService>(
+            builder: (chatService) {
+              if (chatService.conversations.isNotEmpty) {
+                return TextButton(
+                  onPressed: () {
+                    _showClearChatsDialog(context, chatService);
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: colorScheme.error,
+                  ),
+                  child: const Text('Clear All'),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
       body: GetBuilder<ChatService>(
         builder: (chatService) {
@@ -49,41 +67,54 @@ class ChatListPage extends StatelessWidget {
               final messages = conversations[remoteUserId]!;
               final lastMsg = messages.last;
 
-              return ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                leading: CircleAvatar(
-                  radius: 24.r,
-                  backgroundColor: colorScheme.secondaryContainer,
-                  child: Text(
-                    remoteUserId.isNotEmpty ? remoteUserId.substring(0, 1).toUpperCase() : '?',
-                    style: TextStyle(
-                      color: colorScheme.onSecondaryContainer,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.sp,
+              return Dismissible(
+                key: UniqueKey(),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) {
+                  chatService.deleteConversation(remoteUserId);
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  color: colorScheme.error,
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  leading: CircleAvatar(
+                    radius: 24.r,
+                    backgroundColor: colorScheme.secondaryContainer,
+                    child: Text(
+                      remoteUserId.isNotEmpty ? remoteUserId.substring(0, 1).toUpperCase() : '?',
+                      style: TextStyle(
+                        color: colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.sp,
+                      ),
                     ),
                   ),
-                ),
-                title: Text(
-                  'User $remoteUserId',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                    fontSize: 16.sp,
+                  title: Text(
+                    'User $remoteUserId',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                      fontSize: 16.sp,
+                    ),
                   ),
+                  subtitle: Text(
+                    lastMsg.content,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14.sp),
+                  ),
+                  trailing: Text(
+                    _formatSimpleTime(lastMsg.timestamp),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.sp),
+                  ),
+                  onTap: () {
+                    Get.to(() => ChatPage(remoteUserId: remoteUserId));
+                  },
                 ),
-                subtitle: Text(
-                  lastMsg.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14.sp),
-                ),
-                trailing: Text(
-                  _formatSimpleTime(lastMsg.timestamp),
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.sp),
-                ),
-                onTap: () {
-                  Get.to(() => ChatPage(remoteUserId: remoteUserId));
-                },
               );
             },
           );
@@ -136,6 +167,32 @@ class ChatListPage extends StatelessWidget {
                 }
               },
               child: const Text('Start'),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  void _showClearChatsDialog(BuildContext context, ChatService chatService) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Clear All Chats'),
+          content: const Text('Are you sure you want to delete all chat conversations?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                chatService.clearAllConversations();
+                Navigator.pop(context);
+              },
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+              child: const Text('Clear All'),
             ),
           ],
         );

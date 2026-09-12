@@ -64,4 +64,16 @@ class ChatService extends GetxController {
     
     update(); // Notify UI
   }
+
+  void deleteConversation(String remoteUserId) {
+    if (conversations.containsKey(remoteUserId)) {
+      conversations.remove(remoteUserId);
+      update();
+    }
+  }
+
+  void clearAllConversations() {
+    conversations.clear();
+    update();
+  }
 }

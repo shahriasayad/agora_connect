@@ -192,12 +192,30 @@ class _CallPageState extends State<CallPage> {
           // History Title
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Text(
-              'Recent Calls',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Calls',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (agoraService.callHistory.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      _showClearHistoryDialog(context, agoraService);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: colorScheme.error,
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Clear All'),
+                  ),
+              ],
             ),
           ),
           16.vSpace,
@@ -226,12 +244,51 @@ class _CallPageState extends State<CallPage> {
                     separatorBuilder: (context, index) => const Divider(height: 1, indent: 72),
                     itemBuilder: (context, index) {
                       final call = agoraService.callHistory[index];
-                      return _buildHistoryItem(call, colorScheme);
+                      return Dismissible(
+                        key: UniqueKey(),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) {
+                          agoraService.deleteCallHistory(index);
+                        },
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          color: colorScheme.error,
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: _buildHistoryItem(call, colorScheme),
+                      );
                     },
                   ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showClearHistoryDialog(BuildContext context, AgoraService agoraService) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Clear Call History'),
+          content: const Text('Are you sure you want to delete all call history?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                agoraService.clearCallHistory();
+                Navigator.pop(context);
+              },
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+              child: const Text('Clear All'),
+            ),
+          ],
+        );
+      }
     );
   }
 

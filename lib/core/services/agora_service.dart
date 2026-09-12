@@ -339,6 +339,18 @@ class AgoraService extends GetxController {
     update();
   }
 
+  void deleteCallHistory(int index) {
+    if (index >= 0 && index < callHistory.length) {
+      callHistory.removeAt(index);
+      update();
+    }
+  }
+
+  void clearCallHistory() {
+    callHistory.clear();
+    update();
+  }
+
   // --- SIGNALING ACTIONS ---
 
   Future<void> startOutgoingCall(String targetUserId, {bool isAudioCall = false}) async {
