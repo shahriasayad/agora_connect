@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 
 import 'package:agora_connect/core/services/agora_service.dart';
+import 'package:agora_connect/util/screen_util.dart';
 
 class CallPage extends StatefulWidget {
   const CallPage({super.key});
@@ -35,21 +36,21 @@ class _CallPageState extends State<CallPage> {
               ),
               // Connection Status
               Positioned(
-                top: 20,
-                left: 20,
+                top: 20.h,
+                left: 20.w,
                 child: SafeArea(child: _buildConnectionStatus(agoraService)),
               ),
               // Local video preview
               if (agoraService.isJoined)
                 Positioned(
-                  top: 20,
-                  right: 20,
-                  width: 120,
-                  height: 160,
+                  top: 20.h,
+                  right: 20.w,
+                  width: 120.w,
+                  height: 160.h,
                   child: Container(
                     clipBehavior: Clip.hardEdge,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                       color: Colors.black54,
                     ),
                     child: _localVideo(agoraService),
@@ -57,7 +58,7 @@ class _CallPageState extends State<CallPage> {
                 ),
               // Bottom control buttons
               Positioned(
-                bottom: 30,
+                bottom: 30.h,
                 left: 0,
                 right: 0,
                 child: _buildBottomControls(agoraService),
@@ -82,7 +83,7 @@ class _CallPageState extends State<CallPage> {
               onPressed: () => agoraService.startOutgoingCall('user_123'),
               child: const Text('Call user_123'),
             ),
-            const SizedBox(width: 15),
+            15.hSpace,
             ElevatedButton(
               onPressed: () => agoraService.triggerIncomingCall('user_456'),
               child: const Text('Simulate Incoming Call'),
@@ -109,7 +110,7 @@ class _CallPageState extends State<CallPage> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: const Text('Accept', style: TextStyle(color: Colors.white)),
             ),
-            const SizedBox(width: 20),
+            20.hSpace,
             ElevatedButton(
               onPressed: () => agoraService.rejectCall(),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -129,10 +130,10 @@ class _CallPageState extends State<CallPage> {
               ),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12.w),
               ),
             ),
-            const SizedBox(width: 15),
+            15.hSpace,
             IconButton(
               onPressed: () => agoraService.toggleVideo(),
               icon: Icon(
@@ -141,19 +142,19 @@ class _CallPageState extends State<CallPage> {
               ),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12.w),
               ),
             ),
-            const SizedBox(width: 15),
+            15.hSpace,
             IconButton(
               onPressed: () => agoraService.switchCamera(),
               icon: const Icon(Icons.flip_camera_ios, color: Colors.blue),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12.w),
               ),
             ),
-            const SizedBox(width: 15),
+            15.hSpace,
             IconButton(
               onPressed: () => agoraService.toggleSpeaker(),
               icon: Icon(
@@ -162,10 +163,10 @@ class _CallPageState extends State<CallPage> {
               ),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12.w),
               ),
             ),
-            const SizedBox(width: 20),
+            20.hSpace,
             ElevatedButton(
               onPressed: () => agoraService.endCall(),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -178,10 +179,10 @@ class _CallPageState extends State<CallPage> {
 
   Widget _localVideo(AgoraService agoraService) {
     if (!agoraService.isJoined) {
-      return const Center(child: Icon(Icons.person, color: Colors.white, size: 40));
+      return Center(child: Icon(Icons.person, color: Colors.white, size: 40.sp));
     }
     if (agoraService.isVideoOff) {
-      return const Center(child: Icon(Icons.videocam_off, color: Colors.white, size: 40));
+      return Center(child: Icon(Icons.videocam_off, color: Colors.white, size: 40.sp));
     }
     try {
       return AgoraVideoView(
@@ -225,26 +226,26 @@ class _CallPageState extends State<CallPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: Colors.black54,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 8.w,
+            height: 8.w,
             decoration: BoxDecoration(
               color: statusColor,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 8),
+          8.hSpace,
           Text(
             statusText,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: Colors.white, fontSize: 12.sp),
           ),
         ],
       ),

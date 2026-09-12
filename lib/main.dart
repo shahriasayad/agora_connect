@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import 'core/services/agora_service.dart';
 import 'features/call/presentation/pages/call_page.dart';
+import 'util/screen_util.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,10 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
+      builder: (context, child) {
+        AppScreenUtil.init(context);
+        return child!;
+      },
       home: const CallPage(),
     );
   }
