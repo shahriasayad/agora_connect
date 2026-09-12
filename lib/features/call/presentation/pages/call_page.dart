@@ -13,10 +13,18 @@ class CallPage extends StatefulWidget {
 }
 
 class _CallPageState extends State<CallPage> {
+  final TextEditingController _targetIdController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     // Engine will be initialized when a call is started or accepted.
+  }
+  
+  @override
+  void dispose() {
+    _targetIdController.dispose();
+    super.dispose();
   }
 
   @override
@@ -25,7 +33,18 @@ class _CallPageState extends State<CallPage> {
       body: GetBuilder<AgoraService>(
         builder: (agoraService) {
           return Scaffold(
-            appBar: AppBar(title: Text(agoraService.isAudioCall ? 'Audio Call' : 'Video Call')),
+            appBar: AppBar(
+              title: Text(agoraService.isAudioCall ? 'Audio Call' : 'Video Call'),
+              actions: [
+                if (agoraService.callState == CallState.idle)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Text('My ID: ${agoraService.myUserId}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp)),
+                    ),
+                  )
+              ],
+            ),
             body: Stack(
               children: [
                 // Remote video or placeholder
@@ -75,39 +94,44 @@ class _CallPageState extends State<CallPage> {
       case CallState.rejected:
       case CallState.ended:
       case CallState.failed:
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => agoraService.startOutgoingCall('user_123', isAudioCall: false),
-                  child: const Text('Video Call'),
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 30.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _targetIdController,
+                decoration: const InputDecoration(
+                  labelText: 'Target User ID',
+                  border: OutlineInputBorder(),
                 ),
-                15.hSpace,
-                ElevatedButton(
-                  onPressed: () => agoraService.triggerIncomingCall('user_456', isAudioCall: false),
-                  child: const Text('Incoming Video Call'),
-                ),
-              ],
-            ),
-            10.vSpace,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => agoraService.startOutgoingCall('user_123', isAudioCall: true),
-                  child: const Text('Audio Call'),
-                ),
-                15.hSpace,
-                ElevatedButton(
-                  onPressed: () => agoraService.triggerIncomingCall('user_456', isAudioCall: true),
-                  child: const Text('Incoming Audio Call'),
-                ),
-              ],
-            ),
-          ],
+                keyboardType: TextInputType.number,
+              ),
+              20.vSpace,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                       if (_targetIdController.text.isNotEmpty) {
+                          agoraService.startOutgoingCall(_targetIdController.text.trim(), isAudioCall: false);
+                       }
+                    },
+                    child: const Text('Video Call'),
+                  ),
+                  20.hSpace,
+                  ElevatedButton(
+                    onPressed: () {
+                       if (_targetIdController.text.isNotEmpty) {
+                          agoraService.startOutgoingCall(_targetIdController.text.trim(), isAudioCall: true);
+                       }
+                    },
+                    child: const Text('Audio Call'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       case CallState.outgoingRinging:
         return Row(
@@ -220,30 +244,41 @@ class _CallPageState extends State<CallPage> {
     }
   }
 
+  String _formatDuration(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildConnectionStatus(AgoraService agoraService) {
-    if (!agoraService.isJoined) return const SizedBox.shrink();
+    if (!agoraService.isJoined && agoraService.callState != CallState.connected) return const SizedBox.shrink();
 
     String statusText = '';
     Color statusColor = Colors.grey;
 
-    switch (agoraService.connectionState) {
-      case ConnectionStateType.connectionStateDisconnected:
-      case ConnectionStateType.connectionStateFailed:
-        statusText = 'Disconnected';
-        statusColor = Colors.red;
-        break;
-      case ConnectionStateType.connectionStateConnecting:
-        statusText = 'Connecting...';
-        statusColor = Colors.orange;
-        break;
-      case ConnectionStateType.connectionStateConnected:
-        statusText = 'Connected';
-        statusColor = Colors.green;
-        break;
-      case ConnectionStateType.connectionStateReconnecting:
-        statusText = 'Reconnecting...';
-        statusColor = Colors.orange;
-        break;
+    if (agoraService.callState == CallState.connected && agoraService.isJoined) {
+      statusText = _formatDuration(agoraService.callDuration);
+      statusColor = Colors.green;
+    } else {
+      switch (agoraService.connectionState) {
+        case ConnectionStateType.connectionStateDisconnected:
+        case ConnectionStateType.connectionStateFailed:
+          statusText = 'Disconnected';
+          statusColor = Colors.red;
+          break;
+        case ConnectionStateType.connectionStateConnecting:
+          statusText = 'Connecting...';
+          statusColor = Colors.orange;
+          break;
+        case ConnectionStateType.connectionStateConnected:
+          statusText = 'Connected';
+          statusColor = Colors.green;
+          break;
+        case ConnectionStateType.connectionStateReconnecting:
+          statusText = 'Reconnecting...';
+          statusColor = Colors.orange;
+          break;
+      }
     }
 
     return Container(
@@ -275,10 +310,17 @@ class _CallPageState extends State<CallPage> {
 
   Widget _remoteVideo(AgoraService agoraService) {
     if (agoraService.callState == CallState.outgoingRinging) {
-      return Text('Calling ${agoraService.currentCallerId ?? ''}...', textAlign: TextAlign.center);
+      return Text('Calling ${agoraService.currentCallerId ?? ''}...\nWaiting for answer...', textAlign: TextAlign.center, style: TextStyle(fontSize: 18.sp));
     }
     if (agoraService.callState == CallState.incomingRinging) {
-      return Text('Incoming call from ${agoraService.currentCallerId ?? ''}', textAlign: TextAlign.center);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+           Icon(Icons.ring_volume, size: 60.sp, color: Colors.blue),
+           20.vSpace,
+           Text('Incoming ${agoraService.isAudioCall ? 'Audio' : 'Video'} Call\nfrom ${agoraService.currentCallerId ?? ''}', textAlign: TextAlign.center, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold)),
+        ],
+      );
     }
     if (agoraService.callState == CallState.rejected) {
       return const Text('Call Rejected', textAlign: TextAlign.center);
@@ -321,4 +363,3 @@ class _CallPageState extends State<CallPage> {
     }
   }
 }
-
