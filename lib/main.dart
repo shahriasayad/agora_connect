@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+
 import 'core/services/agora_service.dart';
 import 'core/services/chat_service.dart';
 import 'core/theme/app_theme.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Agora Connect',
       themeMode: ThemeMode.system,
       theme: AppTheme.lightTheme,
@@ -35,4 +37,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
