@@ -75,7 +75,7 @@ class AgoraService extends GetxController {
   ConnectionStateType get connectionState => _connectionState;
   CallState get callState => _callState;
   String? get currentCallerId => _currentCallerId;
-  Set<int> get remoteUids => _remoteUids;
+  String? get callChannel => _callChannel;  Set<int> get remoteUids => _remoteUids;
   int? get localUid => _localUid;
   RtcEngine get engine {
     if (_engine == null) {
@@ -285,7 +285,18 @@ class AgoraService extends GetxController {
     if (!_isAudioCall) {
       permissions.add(Permission.camera);
     }
-    await permissions.request();
+    final status = await permissions.request();
+    if (status.values.any((s) => s.isDenied || s.isPermanentlyDenied)) {
+      Get.snackbar(
+        'Permission Required',
+        'Microphone and Camera permissions are needed for calls.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      _resetCallState();
+      return;
+    }
 
     await _engine!.enableAudio();
     await _engine!.adjustPlaybackSignalVolume(100);
@@ -362,7 +373,13 @@ class AgoraService extends GetxController {
     if (!isAudioCall) permissions.add(Permission.camera);
     final status = await permissions.request();
     if (status.values.any((s) => s.isDenied || s.isPermanentlyDenied)) {
-      // Permission denied
+      Get.snackbar(
+        'Permission Required',
+        'Microphone and Camera permissions are needed for calls.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
       return;
     }
 
