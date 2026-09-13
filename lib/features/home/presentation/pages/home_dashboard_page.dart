@@ -84,7 +84,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                         borderRadius: BorderRadius.circular(24.r),
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.shadow.withOpacity(0.05),
+                            color: colorScheme.shadow.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           )
@@ -223,28 +223,46 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: colorScheme.primary, size: 28.sp),
-          12.vSpace,
-          Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          4.vSpace,
-          Text(
-            subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 24.sp),
+            ),
+            16.vSpace,
+            Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            4.vSpace,
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:agora_connect/core/services/chat_service.dart';
 import 'package:agora_connect/features/chat/presentation/pages/chat_page.dart';
 import 'package:agora_connect/util/screen_util.dart';
+import 'package:agora_connect/core/theme/app_colors.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});
@@ -81,15 +82,28 @@ class ChatListPage extends StatelessWidget {
                 ),
                 child: ListTile(
                   contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  leading: CircleAvatar(
-                    radius: 24.r,
-                    backgroundColor: colorScheme.secondaryContainer,
-                    child: Text(
-                      remoteUserId.isNotEmpty ? remoteUserId.substring(0, 1).toUpperCase() : '?',
-                      style: TextStyle(
-                        color: colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.sp,
+                  leading: Container(
+                    width: 48.w,
+                    height: 48.w,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        remoteUserId.isNotEmpty ? remoteUserId.substring(0, 1).toUpperCase() : '?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18.sp,
+                        ),
                       ),
                     ),
                   ),

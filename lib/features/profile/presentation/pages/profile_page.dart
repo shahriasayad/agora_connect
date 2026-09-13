@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agora_connect/core/services/agora_service.dart';
 import 'package:agora_connect/util/screen_util.dart';
+import 'package:agora_connect/core/theme/app_colors.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -26,10 +27,21 @@ class ProfilePage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 48.r,
-                      backgroundColor: colorScheme.primaryContainer,
-                      child: Icon(Icons.person, size: 48.sp, color: colorScheme.onPrimaryContainer),
+                    Container(
+                      width: 96.w,
+                      height: 96.w,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          )
+                        ],
+                      ),
+                      child: Icon(Icons.person, size: 48.sp, color: Colors.white),
                     ),
                     16.vSpace,
                     Text(

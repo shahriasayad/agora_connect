@@ -5,6 +5,7 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 
 import 'package:agora_connect/core/services/agora_service.dart';
 import 'package:agora_connect/util/screen_util.dart';
+import 'package:agora_connect/core/theme/app_colors.dart';
 
 class CallPage extends StatefulWidget {
   const CallPage({super.key});
@@ -59,13 +60,13 @@ class _CallPageState extends State<CallPage> {
             _buildCircularAction(
               icon: Icons.close,
               label: 'Decline',
-              color: Colors.redAccent,
+              color: AppColors.endCall,
               onPressed: () => agoraService.rejectCall(),
             ),
             _buildCircularAction(
               icon: Icons.call,
               label: 'Accept',
-              color: Colors.green,
+              color: AppColors.callActive,
               onPressed: () => agoraService.acceptCall(),
             ),
           ],
@@ -88,7 +89,7 @@ class _CallPageState extends State<CallPage> {
         child: _buildCircularAction(
           icon: Icons.call_end,
           label: 'Cancel',
-          color: Colors.redAccent,
+          color: AppColors.endCall,
           onPressed: () => agoraService.endCall(),
         ),
       ),
@@ -255,7 +256,7 @@ class _CallPageState extends State<CallPage> {
                 isActive: agoraService.isMuted,
                 activeColor: Colors.white,
                 inactiveColor: Colors.white54,
-                activeBg: Colors.white.withOpacity(0.3),
+                activeBg: Colors.white.withValues(alpha: 0.3),
                 onPressed: () => agoraService.toggleMute(),
               ),
               if (!agoraService.isAudioCall) ...[
@@ -264,7 +265,7 @@ class _CallPageState extends State<CallPage> {
                   isActive: agoraService.isVideoOff,
                   activeColor: Colors.white,
                   inactiveColor: Colors.white54,
-                  activeBg: Colors.white.withOpacity(0.3),
+                  activeBg: Colors.white.withValues(alpha: 0.3),
                   onPressed: () => agoraService.toggleVideo(),
                 ),
                 _buildControlButton(
@@ -281,7 +282,7 @@ class _CallPageState extends State<CallPage> {
                 isActive: !agoraService.isSpeakerOn, // Highlight if off
                 activeColor: Colors.white,
                 inactiveColor: Colors.white,
-                activeBg: Colors.white.withOpacity(0.3),
+                activeBg: Colors.white.withValues(alpha: 0.3),
                 onPressed: () => agoraService.toggleSpeaker(),
               ),
               _buildControlButton(
@@ -289,7 +290,7 @@ class _CallPageState extends State<CallPage> {
                 isActive: true,
                 activeColor: Colors.white,
                 inactiveColor: Colors.white,
-                activeBg: Colors.redAccent,
+                activeBg: AppColors.endCall,
                 onPressed: () => agoraService.endCall(),
               ),
             ],
@@ -337,15 +338,8 @@ class _CallPageState extends State<CallPage> {
   }) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.surface,
-          ],
-        ),
+      decoration: const BoxDecoration(
+        gradient: AppColors.callBackgroundGradient,
       ),
       child: SafeArea(
         child: Column(
@@ -360,7 +354,7 @@ class _CallPageState extends State<CallPage> {
                 color: Theme.of(context).colorScheme.primary,
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 30,
                     spreadRadius: 10,
                   )
@@ -423,7 +417,7 @@ class _CallPageState extends State<CallPage> {
             shape: const CircleBorder(),
             padding: EdgeInsets.all(20.w),
             elevation: 8,
-            shadowColor: color.withOpacity(0.5),
+            shadowColor: color.withValues(alpha: 0.5),
           ),
           child: Icon(icon, size: 32.sp),
         ),
@@ -452,25 +446,25 @@ class _CallPageState extends State<CallPage> {
 
     if (agoraService.callState == CallState.connected && agoraService.isJoined) {
       statusText = _formatDuration(agoraService.callDuration);
-      statusColor = Colors.greenAccent;
+      statusColor = AppColors.success;
     } else {
       switch (agoraService.connectionState) {
         case ConnectionStateType.connectionStateDisconnected:
         case ConnectionStateType.connectionStateFailed:
           statusText = 'Disconnected';
-          statusColor = Colors.redAccent;
+          statusColor = AppColors.error;
           break;
         case ConnectionStateType.connectionStateConnecting:
           statusText = 'Connecting...';
-          statusColor = Colors.orangeAccent;
+          statusColor = AppColors.warning;
           break;
         case ConnectionStateType.connectionStateConnected:
           statusText = 'Connected';
-          statusColor = Colors.greenAccent;
+          statusColor = AppColors.success;
           break;
         case ConnectionStateType.connectionStateReconnecting:
           statusText = 'Reconnecting...';
-          statusColor = Colors.orangeAccent;
+          statusColor = AppColors.warning;
           break;
       }
     }

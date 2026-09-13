@@ -108,7 +108,7 @@ class AppTheme {
         ),
         hintStyle: TextStyle(color: AppColors.textSecondaryLight, fontSize: 16.sp),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -154,7 +154,7 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         elevation: 0,
@@ -248,7 +248,7 @@ class AppTheme {
         ),
         hintStyle: TextStyle(color: AppColors.textSecondaryDark, fontSize: 16.sp),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -294,7 +294,7 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         elevation: 0,

@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'core/services/agora_service.dart';
 import 'core/services/chat_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'util/screen_util.dart';
 
@@ -24,17 +25,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Agora Connect',
       themeMode: ThemeMode.system,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       builder: (context, child) {
         AppScreenUtil.init(context);
         return child!;
@@ -43,3 +35,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

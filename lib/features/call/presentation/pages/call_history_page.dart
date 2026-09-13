@@ -105,9 +105,14 @@ class CallHistoryPage extends StatelessWidget {
 
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-      leading: CircleAvatar(
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        child: Icon(typeIcon, color: colorScheme.onSurfaceVariant),
+      leading: Container(
+        width: 48.w,
+        height: 48.w,
+        decoration: BoxDecoration(
+          color: isMissed ? colorScheme.errorContainer : colorScheme.surfaceContainerHighest,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(typeIcon, color: isMissed ? colorScheme.onErrorContainer : colorScheme.onSurfaceVariant),
       ),
       title: Text(
         'User ${call.remoteUserId}',

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:agora_connect/core/services/chat_service.dart';
 import 'package:agora_connect/core/services/agora_service.dart';
 import 'package:agora_connect/util/screen_util.dart';
+import 'package:agora_connect/core/theme/app_colors.dart';
 
 class ChatPage extends StatefulWidget {
   final String remoteUserId;
@@ -131,13 +132,22 @@ class _ChatPageState extends State<ChatPage> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: isMe ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          gradient: isMe ? AppColors.primaryGradient : null,
+          color: isMe ? null : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20.r),
             topRight: Radius.circular(20.r),
             bottomLeft: Radius.circular(isMe ? 20.r : 4.r),
             bottomRight: Radius.circular(isMe ? 4.r : 20.r),
           ),
+          boxShadow: [
+            if (isMe)
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+          ],
         ),
         child: Column(
           crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -145,7 +155,7 @@ class _ChatPageState extends State<ChatPage> {
             Text(
               msg.content,
               style: TextStyle(
-                color: isMe ? colorScheme.onPrimary : colorScheme.onSurface,
+                color: isMe ? Colors.white : colorScheme.onSurface,
                 fontSize: 16.sp,
               ),
             ),
@@ -153,7 +163,7 @@ class _ChatPageState extends State<ChatPage> {
             Text(
               _formatSimpleTime(msg.timestamp),
               style: TextStyle(
-                color: isMe ? colorScheme.onPrimary.withValues(alpha: 0.7) : colorScheme.onSurfaceVariant,
+                color: isMe ? Colors.white.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
                 fontSize: 10.sp,
               ),
             ),
