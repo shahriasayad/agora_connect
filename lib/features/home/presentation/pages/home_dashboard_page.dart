@@ -165,11 +165,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
                   32.vSpace,
                   
-                  // Recent Calls summary
+                  // Call History
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                     child: Text(
-                      'Quick Actions',
+                      'Recent Calls',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -177,37 +177,62 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                     ),
                   ),
                   16.vSpace,
-                  
-                  // Cards for navigation or info could go here, for now keeping it clean.
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionCard(
-                            context,
-                            icon: Icons.history,
-                            title: 'Call History',
-                            subtitle: '${agoraService.callHistory.length} recent',
-                            onTap: () {
-                              // We can switch tab here but Get.find to change tab is complex.
-                              // Actually Home is for dashboard.
-                            },
+                  if (agoraService.callHistory.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Center(
+                        child: Text(
+                          'No recent calls',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        16.hSpace,
-                        Expanded(
-                          child: _buildActionCard(
-                            context,
-                            icon: Icons.person_outline,
-                            title: 'Your Profile',
-                            subtitle: 'ID: ${agoraService.myUserId}',
-                            onTap: () {},
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: agoraService.callHistory.length > 5 ? 5 : agoraService.callHistory.length,
+                      itemBuilder: (context, index) {
+                        final call = agoraService.callHistory[index];
+                        final isOutgoing = call.isOutgoing;
+                        final isVideo = !call.isAudio;
+                        
+                        return Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+                          child: Material(
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(12.r),
+                            clipBehavior: Clip.antiAlias,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                backgroundColor: colorScheme.primaryContainer,
+                                child: Icon(
+                                  isVideo ? Icons.videocam : Icons.call,
+                                  color: colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                              title: Text(
+                                call.remoteUserId,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text('${isOutgoing ? "Outgoing" : "Incoming"} • ${call.status}'),
+                              trailing: IconButton(
+                                icon: Icon(Icons.call, color: colorScheme.primary),
+                                onPressed: () {
+                                  agoraService.startOutgoingCall(
+                                    call.remoteUserId,
+                                    isAudioCall: call.isAudio,
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
                   
                   32.vSpace,
                 ],
@@ -219,51 +244,5 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     );
   }
 
-  Widget _buildActionCard(BuildContext context, {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            )
-          ],
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 24.sp),
-            ),
-            16.vSpace,
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            4.vSpace,
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }
